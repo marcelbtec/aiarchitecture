@@ -1,0 +1,3213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State-of-the-Art AI RAG Architecture - Full Stack</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: -1px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 25%, #4facfe 50%, #00f2fe 75%, #43e97b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        .stack-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pipeline-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stack-btn, .pipeline-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            padding: 10px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+        }
+
+        .stack-btn:hover, .pipeline-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+            color: #fff;
+        }
+
+        .stack-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            color: #fff;
+        }
+
+        .pipeline-btn.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+            color: #fff;
+        }
+
+        .architecture {
+            position: relative;
+            width: 100%;
+            height: 900px;
+            margin: 30px 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .architecture.hidden {
+            display: none;
+        }
+
+        .layer-label {
+            position: absolute;
+            left: -100px;
+            font-size: 0.8rem;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+
+        .component {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 16px;
+            cursor: move;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            user-select: none;
+        }
+
+        .component:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .component.active {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .component.dragging {
+            opacity: 0.85;
+            z-index: 1000;
+            box-shadow: 0 15px 35px rgba(255, 255, 255, 0.3);
+            cursor: grabbing;
+            transform: scale(1.02) translateY(-3px);
+        }
+
+        .component h3 {
+            font-size: 1rem;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .component p {
+            font-size: 0.8rem;
+            color: #999;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+
+        .component .tech-stack {
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #666;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+        }
+
+        /* Component specific colors - more subtle */
+        .security-layer { border-left: 3px solid #ff006e; }
+        .infrastructure-layer { border-left: 3px solid #8338ec; }
+        .platform-layer { border-left: 3px solid #3a86ff; }
+        .application-layer { border-left: 3px solid #06ffa5; }
+        .ml-layer { border-left: 3px solid #ffbe0b; }
+        .monitoring-layer { border-left: 3px solid #fb5607; }
+
+        /* Original RAG colors */
+        .input-layer { border-left: 3px solid #f093fb; }
+        .embedding-layer { border-left: 3px solid #f5576c; }
+        .retrieval-layer { border-left: 3px solid #4facfe; }
+        .augmentation-layer { border-left: 3px solid #00f2fe; }
+        .generation-layer { border-left: 3px solid #43e97b; }
+        .output-layer { border-left: 3px solid #fa709a; }
+
+        .connection {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            height: 1px;
+            transform-origin: left center;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        .security-connection {
+            background: linear-gradient(90deg, transparent, rgba(255, 0, 110, 0.3), transparent);
+            height: 2px;
+            opacity: 0.2;
+        }
+
+        .info-panel {
+            position: fixed;
+            right: -450px;
+            top: 0;
+            width: 450px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            backdrop-filter: blur(20px);
+            z-index: 2000;
+        }
+
+        .info-panel.active {
+            right: 0;
+        }
+
+        .info-panel h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .info-panel .close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .info-panel .close:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .info-section {
+            margin-bottom: 25px;
+        }
+
+        .info-section h3 {
+            color: #4facfe;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .info-section p, .info-section li {
+            color: #aaa;
+            line-height: 1.5;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        .info-section ul {
+            list-style: none;
+            padding-left: 15px;
+        }
+
+        .info-section li:before {
+            content: "▸ ";
+            color: #4facfe;
+            margin-right: 8px;
+        }
+
+        .code-block {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 12px;
+            margin: 10px 0;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            color: #ccc;
+        }
+
+        .metric {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 4px 12px;
+            border-radius: 15px;
+            margin: 4px 4px 4px 0;
+            font-size: 0.75rem;
+            color: #aaa;
+        }
+
+        .controls {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            padding: 8px 16px;
+            border-radius: 18px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .control-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, transparent 1px, transparent 49px, rgba(255,255,255,0.02) 50px),
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0px, transparent 1px, transparent 49px, rgba(255,255,255,0.02) 50px);
+            pointer-events: none;
+            display: none;
+        }
+
+        .grid-overlay.show {
+            display: block;
+        }
+
+        .save-notification {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #43e97b, #00f2fe);
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .save-notification.show {
+            opacity: 1;
+        }
+
+        /* Reduce visual noise */
+        @media (max-width: 768px) {
+            .layer-label {
+                display: none;
+            }
+            
+            .component {
+                padding: 12px;
+            }
+            
+            .component h3 {
+                font-size: 0.9rem;
+            }
+            
+            .component p {
+                font-size: 0.75rem;
+            }
+            
+            .component .tech-stack {
+                font-size: 0.65rem;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button class="control-btn" onclick="toggleGrid()">Grid</button>
+        <button class="control-btn" onclick="resetLayout()">Reset</button>
+        <button class="control-btn" onclick="saveLayout()">Save</button>
+        <button class="control-btn" onclick="loadLayout()">Load</button>
+    </div>
+
+    <div class="container">
+        <h1>AI Architecture and Components</h1>
+        <p class="subtitle">Complete Software, Hardware & Security Stack</p>
+        
+        <div class="stack-selector">
+            <button class="stack-btn active" onclick="showStack('ml')">ML Architecture</button>
+            <button class="stack-btn" onclick="showStack('software')">Software Stack</button>
+            <button class="stack-btn" onclick="showStack('hardware')">Hardware Infrastructure</button>
+            <button class="stack-btn" onclick="showStack('security')">Security Architecture</button>
+        </div>
+        
+        <div class="pipeline-selector">
+            <button class="pipeline-btn" onclick="showPipeline('chatbot')">Customer Support Chatbot</button>
+            <button class="pipeline-btn" onclick="showPipeline('research')">Research Assistant</button>
+            <button class="pipeline-btn" onclick="showPipeline('code')">Code Generation</button>
+            <button class="pipeline-btn" onclick="showPipeline('analytics')">Document Analytics</button>
+        </div>
+        
+        <!-- ML Architecture -->
+        <div class="architecture" id="ml-stack">
+            <div class="grid-overlay"></div>
+            <div class="layer-label" style="top: 350px;">PROCESSING PIPELINE</div>
+            
+            <!-- Input Layer -->
+            <div class="component input-layer" data-id="input" style="left: 50px; top: 350px; width: 180px;">
+                <h3>Input Interface</h3>
+                <p>Multi-modal input</p>
+                <div class="tech-stack">FastAPI, gRPC</div>
+            </div>
+
+            <!-- Embedding Layer -->
+            <div class="component embedding-layer" data-id="embedding" style="left: 280px; top: 250px; width: 200px;">
+                <h3>Embedding Engine</h3>
+                <p>Vector representations</p>
+                <div class="tech-stack">Ada-002, BERT</div>
+            </div>
+
+            <!-- Vector Database -->
+            <div class="component retrieval-layer" data-id="vectordb" style="left: 280px; top: 450px; width: 200px;">
+                <h3>Vector Database</h3>
+                <p>High-dimensional storage</p>
+                <div class="tech-stack">Pinecone, Weaviate</div>
+            </div>
+
+            <!-- Retrieval System -->
+            <div class="component retrieval-layer" data-id="retrieval" style="left: 530px; top: 350px; width: 200px;">
+                <h3>Retrieval System</h3>
+                <p>Semantic search</p>
+                <div class="tech-stack">FAISS, ElasticSearch</div>
+            </div>
+
+            <!-- Context Augmentation -->
+            <div class="component augmentation-layer" data-id="augmentation" style="left: 780px; top: 250px; width: 200px;">
+                <h3>Context Augmentation</h3>
+                <p>Dynamic context</p>
+                <div class="tech-stack">LangChain, DSPy</div>
+            </div>
+
+            <!-- LLM -->
+            <div class="component generation-layer" data-id="llm" style="left: 780px; top: 450px; width: 200px;">
+                <h3>Large Language Model</h3>
+                <p>Generation engine</p>
+                <div class="tech-stack">GPT-4, Claude 3</div>
+            </div>
+
+            <!-- Output Processing -->
+            <div class="component output-layer" data-id="output" style="left: 1030px; top: 350px; width: 180px;">
+                <h3>Output Processing</h3>
+                <p>Response optimization</p>
+                <div class="tech-stack">Guardrails AI</div>
+            </div>
+
+            <!-- Additional Components -->
+            <div class="component embedding-layer" data-id="cache" style="left: 530px; top: 150px; width: 200px;">
+                <h3>Cache Layer</h3>
+                <p>Response caching</p>
+                <div class="tech-stack">Redis, Memcached</div>
+            </div>
+
+            <div class="component augmentation-layer" data-id="rerank" style="left: 530px; top: 550px; width: 200px;">
+                <h3>Re-ranking Module</h3>
+                <p>Result optimization</p>
+                <div class="tech-stack">CrossEncoder, ColBERT</div>
+            </div>
+
+            <!-- Monitoring -->
+            <div class="component monitoring-layer" data-id="mlmonitoring" style="left: 280px; top: 650px; width: 700px;">
+                <h3>ML Monitoring & Observability</h3>
+                <p>Model performance, drift detection, and metrics</p>
+                <div class="tech-stack">Weights & Biases, MLflow, Prometheus</div>
+            </div>
+        </div>
+
+        <!-- Software Stack -->
+        <div class="architecture hidden" id="software-stack">
+            <div class="grid-overlay"></div>
+            <div class="layer-label" style="top: 150px;">APPLICATION</div>
+            <div class="layer-label" style="top: 350px;">PLATFORM</div>
+            <div class="layer-label" style="top: 550px;">INFRASTRUCTURE</div>
+            <div class="layer-label" style="top: 750px;">DATA</div>
+
+            <!-- Application Layer -->
+            <div class="component application-layer" data-id="api-gateway" style="left: 50px; top: 100px; width: 200px;">
+                <h3>API Gateway</h3>
+                <p>Request routing & rate limiting</p>
+                <div class="tech-stack">Kong, AWS API Gateway</div>
+            </div>
+
+            <div class="component application-layer" data-id="web-app" style="left: 300px; top: 100px; width: 200px;">
+                <h3>Web Application</h3>
+                <p>Frontend interfaces</p>
+                <div class="tech-stack">React, Next.js, Vue</div>
+            </div>
+
+            <div class="component application-layer" data-id="mobile" style="left: 550px; top: 100px; width: 200px;">
+                <h3>Mobile SDKs</h3>
+                <p>iOS/Android integration</p>
+                <div class="tech-stack">Swift, Kotlin, Flutter</div>
+            </div>
+
+            <div class="component application-layer" data-id="webhooks" style="left: 800px; top: 100px; width: 200px;">
+                <h3>Webhook Service</h3>
+                <p>Event-driven integration</p>
+                <div class="tech-stack">Webhook.site, Zapier</div>
+            </div>
+
+            <!-- Platform Layer -->
+            <div class="component platform-layer" data-id="orchestration" style="left: 50px; top: 300px; width: 200px;">
+                <h3>Orchestration</h3>
+                <p>Container management</p>
+                <div class="tech-stack">Kubernetes, Docker Swarm</div>
+            </div>
+
+            <div class="component platform-layer" data-id="service-mesh" style="left: 300px; top: 300px; width: 200px;">
+                <h3>Service Mesh</h3>
+                <p>Microservice communication</p>
+                <div class="tech-stack">Istio, Linkerd</div>
+            </div>
+
+            <div class="component platform-layer" data-id="message-queue" style="left: 550px; top: 300px; width: 200px;">
+                <h3>Message Queue</h3>
+                <p>Async processing</p>
+                <div class="tech-stack">Kafka, RabbitMQ, SQS</div>
+            </div>
+
+            <div class="component platform-layer" data-id="workflow" style="left: 800px; top: 300px; width: 200px;">
+                <h3>Workflow Engine</h3>
+                <p>Process automation</p>
+                <div class="tech-stack">Airflow, Temporal</div>
+            </div>
+
+            <!-- Infrastructure Layer -->
+            <div class="component infrastructure-layer" data-id="compute" style="left: 50px; top: 500px; width: 200px;">
+                <h3>Compute Resources</h3>
+                <p>Processing power</p>
+                <div class="tech-stack">EC2, GCE, Azure VMs</div>
+            </div>
+
+            <div class="component infrastructure-layer" data-id="storage" style="left: 300px; top: 500px; width: 200px;">
+                <h3>Storage Systems</h3>
+                <p>Data persistence</p>
+                <div class="tech-stack">S3, GCS, Azure Blob</div>
+            </div>
+
+            <div class="component infrastructure-layer" data-id="networking" style="left: 550px; top: 500px; width: 200px;">
+                <h3>Networking</h3>
+                <p>CDN & load balancing</p>
+                <div class="tech-stack">CloudFlare, Akamai</div>
+            </div>
+
+            <div class="component infrastructure-layer" data-id="serverless" style="left: 800px; top: 500px; width: 200px;">
+                <h3>Serverless</h3>
+                <p>Function computing</p>
+                <div class="tech-stack">Lambda, Cloud Functions</div>
+            </div>
+
+            <!-- Data Layer -->
+            <div class="component platform-layer" data-id="databases" style="left: 50px; top: 700px; width: 300px;">
+                <h3>Databases</h3>
+                <p>Structured & unstructured data</p>
+                <div class="tech-stack">PostgreSQL, MongoDB, Cassandra</div>
+            </div>
+
+            <div class="component platform-layer" data-id="data-lake" style="left: 400px; top: 700px; width: 300px;">
+                <h3>Data Lake</h3>
+                <p>Raw data storage</p>
+                <div class="tech-stack">Delta Lake, Apache Iceberg</div>
+            </div>
+
+            <div class="component platform-layer" data-id="streaming" style="left: 750px; top: 700px; width: 250px;">
+                <h3>Stream Processing</h3>
+                <p>Real-time data pipeline</p>
+                <div class="tech-stack">Flink, Spark Streaming</div>
+            </div>
+        </div>
+
+        <!-- Hardware Infrastructure -->
+        <div class="architecture hidden" id="hardware-stack">
+            <div class="grid-overlay"></div>
+            <div class="layer-label" style="top: 150px;">EDGE</div>
+            <div class="layer-label" style="top: 350px;">COMPUTE</div>
+            <div class="layer-label" style="top: 550px;">STORAGE</div>
+            <div class="layer-label" style="top: 750px;">NETWORK</div>
+
+            <!-- Edge Layer -->
+            <div class="component infrastructure-layer" data-id="edge-devices" style="left: 50px; top: 100px; width: 250px;">
+                <h3>Edge Devices</h3>
+                <p>Local processing units</p>
+                <div class="tech-stack">NVIDIA Jetson, Google Coral</div>
+            </div>
+
+            <div class="component infrastructure-layer" data-id="edge-servers" style="left: 350px; top: 100px; width: 250px;">
+                <h3>Edge Servers</h3>
+                <p>Regional compute nodes</p>
+                <div class="tech-stack">Dell EMC, HPE EdgeLine</div>
+            </div>
+
+            <div class="component infrastructure-layer" data-id="5g-mec" style="left: 650px; top: 100px; width: 250px;">
+                <h3>5G MEC</h3>
+                <p>Mobile edge computing</p>
+                <div class="tech-stack">AWS Wavelength, Azure Edge</div>
+            </div>
+
+            <!-- Compute Layer -->
+            <div class="component ml-layer" data-id="gpu-clusters" style="left: 50px; top: 300px; width: 250px;">
+                <h3>GPU Clusters</h3>
+                <p>AI/ML acceleration</p>
+                <div class="tech-stack">A100, H100, 8x GPU nodes</div>
+                <div class="metric">80GB HBM</div>
+                <div class="metric">600GB/s</div>
+            </div>
+
+            <div class="component ml-layer" data-id="tpu-pods" style="left: 350px; top: 300px; width: 250px;">
+                <h3>TPU Pods</h3>
+                <p>Tensor processing units</p>
+                <div class="tech-stack">TPU v4, 4096 chips</div>
+                <div class="metric">1.1 exaflops</div>
+            </div>
+
+            <div class="component infrastructure-layer" data-id="cpu-nodes" style="left: 650px; top: 300px; width: 250px;">
+                <h3>CPU Nodes</h3>
+                <p>General compute</p>
+                <div class="tech-stack">AMD EPYC, Intel Xeon</div>
+                <div class="metric">128 cores</div>
+                <div class="metric">2TB RAM</div>
+            </div>
+
+            <div class="component infrastructure-layer" data-id="fpga" style="left: 950px; top: 300px; width: 200px;">
+                <h3>FPGA Arrays</h3>
+                <p>Custom acceleration</p>
+                <div class="tech-stack">Xilinx, Intel Stratix</div>
+            </div>
+
+            <!-- Storage Layer -->
+            <div class="component platform-layer" data-id="nvme-storage" style="left: 50px; top: 500px; width: 250px;">
+                <h3>NVMe Storage</h3>
+                <p>High-speed SSD arrays</p>
+                <div class="tech-stack">Pure Storage, NetApp</div>
+                <div class="metric">25GB/s</div>
+                <div class="metric">100μs latency</div>
+            </div>
+
+            <div class="component platform-layer" data-id="object-storage" style="left: 350px; top: 500px; width: 250px;">
+                <h3>Object Storage</h3>
+                <p>Scalable data repository</p>
+                <div class="tech-stack">MinIO, Ceph</div>
+                <div class="metric">10PB capacity</div>
+            </div>
+
+            <div class="component platform-layer" data-id="tape-archive" style="left: 650px; top: 500px; width: 250px;">
+                <h3>Tape Archive</h3>
+                <p>Long-term cold storage</p>
+                <div class="tech-stack">LTO-9, IBM TS4500</div>
+                <div class="metric">18TB/cartridge</div>
+            </div>
+
+            <!-- Network Layer -->
+            <div class="component infrastructure-layer" data-id="infiniband" style="left: 50px; top: 700px; width: 300px;">
+                <h3>InfiniBand Fabric</h3>
+                <p>Ultra-low latency interconnect</p>
+                <div class="tech-stack">200Gb/s HDR, RDMA</div>
+                <div class="metric">0.6μs latency</div>
+            </div>
+
+            <div class="component infrastructure-layer" data-id="backbone" style="left: 400px; top: 700px; width: 300px;">
+                <h3>Network Backbone</h3>
+                <p>Core routing infrastructure</p>
+                <div class="tech-stack">100GbE, DWDM</div>
+                <div class="metric">400Gb/s links</div>
+            </div>
+
+            <div class="component infrastructure-layer" data-id="load-balancers" style="left: 750px; top: 700px; width: 250px;">
+                <h3>Load Balancers</h3>
+                <p>Traffic distribution</p>
+                <div class="tech-stack">F5, HAProxy</div>
+                <div class="metric">10M RPS</div>
+            </div>
+        </div>
+
+        <!-- Security Architecture -->
+        <div class="architecture hidden" id="security-stack">
+            <div class="grid-overlay"></div>
+            <div class="layer-label" style="top: 150px;">ACCESS</div>
+            <div class="layer-label" style="top: 350px;">PROTECTION</div>
+            <div class="layer-label" style="top: 550px;">DETECTION</div>
+            <div class="layer-label" style="top: 750px;">COMPLIANCE</div>
+
+            <!-- Access Layer -->
+            <div class="component security-layer" data-id="iam" style="left: 50px; top: 100px; width: 200px;">
+                <h3>IAM System</h3>
+                <p>Identity & access mgmt</p>
+                <div class="tech-stack">Okta, Auth0, Keycloak</div>
+            </div>
+
+            <div class="component security-layer" data-id="mfa" style="left: 300px; top: 100px; width: 200px;">
+                <h3>Multi-Factor Auth</h3>
+                <p>Enhanced authentication</p>
+                <div class="tech-stack">Duo, YubiKey, TOTP</div>
+            </div>
+
+            <div class="component security-layer" data-id="sso" style="left: 550px; top: 100px; width: 200px;">
+                <h3>SSO Federation</h3>
+                <p>Single sign-on</p>
+                <div class="tech-stack">SAML, OAuth 2.0</div>
+            </div>
+
+            <div class="component security-layer" data-id="pam" style="left: 800px; top: 100px; width: 200px;">
+                <h3>Privileged Access</h3>
+                <p>Admin access control</p>
+                <div class="tech-stack">CyberArk, HashiCorp</div>
+            </div>
+
+            <!-- Protection Layer -->
+            <div class="component security-layer" data-id="waf" style="left: 50px; top: 300px; width: 200px;">
+                <h3>Web App Firewall</h3>
+                <p>Application protection</p>
+                <div class="tech-stack">ModSecurity, AWS WAF</div>
+            </div>
+
+            <div class="component security-layer" data-id="encryption" style="left: 300px; top: 300px; width: 200px;">
+                <h3>Encryption</h3>
+                <p>Data protection</p>
+                <div class="tech-stack">AES-256, TLS 1.3</div>
+            </div>
+
+            <div class="component security-layer" data-id="secrets" style="left: 550px; top: 300px; width: 200px;">
+                <h3>Secrets Management</h3>
+                <p>Credential storage</p>
+                <div class="tech-stack">Vault, AWS KMS</div>
+            </div>
+
+            <div class="component security-layer" data-id="dlp" style="left: 800px; top: 300px; width: 200px;">
+                <h3>Data Loss Prevention</h3>
+                <p>Sensitive data protection</p>
+                <div class="tech-stack">Forcepoint, Symantec</div>
+            </div>
+
+            <!-- Detection Layer -->
+            <div class="component monitoring-layer" data-id="siem" style="left: 50px; top: 500px; width: 200px;">
+                <h3>SIEM Platform</h3>
+                <p>Security monitoring</p>
+                <div class="tech-stack">Splunk, Elastic SIEM</div>
+            </div>
+
+            <div class="component monitoring-layer" data-id="ids" style="left: 300px; top: 500px; width: 200px;">
+                <h3>IDS/IPS</h3>
+                <p>Intrusion detection</p>
+                <div class="tech-stack">Snort, Suricata</div>
+            </div>
+
+            <div class="component monitoring-layer" data-id="threat-intel" style="left: 550px; top: 500px; width: 200px;">
+                <h3>Threat Intelligence</h3>
+                <p>Security analytics</p>
+                <div class="tech-stack">MISP, ThreatConnect</div>
+            </div>
+
+            <div class="component monitoring-layer" data-id="forensics" style="left: 800px; top: 500px; width: 200px;">
+                <h3>Forensics Tools</h3>
+                <p>Incident investigation</p>
+                <div class="tech-stack">Volatility, DFIR</div>
+            </div>
+
+            <!-- Compliance Layer -->
+            <div class="component platform-layer" data-id="audit" style="left: 50px; top: 700px; width: 200px;">
+                <h3>Audit Logging</h3>
+                <p>Compliance tracking</p>
+                <div class="tech-stack">CloudTrail, Falco</div>
+            </div>
+
+            <div class="component platform-layer" data-id="privacy" style="left: 300px; top: 700px; width: 200px;">
+                <h3>Privacy Controls</h3>
+                <p>GDPR/CCPA compliance</p>
+                <div class="tech-stack">OneTrust, TrustArc</div>
+            </div>
+
+            <div class="component platform-layer" data-id="governance" style="left: 550px; top: 700px; width: 200px;">
+                <h3>Governance</h3>
+                <p>Policy management</p>
+                <div class="tech-stack">ServiceNow, Archer</div>
+            </div>
+
+            <div class="component platform-layer" data-id="vulnerability" style="left: 800px; top: 700px; width: 200px;">
+                <h3>Vulnerability Mgmt</h3>
+                <p>Security scanning</p>
+                <div class="tech-stack">Nessus, Qualys</div>
+            </div>
+
+            <!-- ML Security -->
+            <div class="component security-layer" data-id="ml-security" style="left: 50px; top: 850px; width: 950px;">
+                <h3>ML Security Suite</h3>
+                <p>Model protection, adversarial defense, prompt injection detection</p>
+                <div class="tech-stack">Robust Intelligence, HiddenLayer, Protect AI, NeMo Guardrails</div>
+            </div>
+        </div>
+
+        <!-- Pipeline Views -->
+        <!-- Customer Support Chatbot Pipeline -->
+        <div class="architecture hidden" id="chatbot-pipeline">
+            <div class="grid-overlay"></div>
+            <h2 style="text-align: center; color: #f093fb; margin-bottom: 40px;">Customer Support Chatbot Pipeline</h2>
+            
+            <div class="component input-layer" data-id="user-query" style="left: 50px; top: 300px; width: 180px;">
+                <h3>User Query</h3>
+                <p>Customer support request</p>
+                <div class="tech-stack">Natural language input</div>
+            </div>
+
+            <div class="component platform-layer" data-id="intent-classification" style="left: 280px; top: 300px; width: 200px;">
+                <h3>Intent Classification</h3>
+                <p>Categorize query type</p>
+                <div class="tech-stack">BERT classifier</div>
+            </div>
+
+            <div class="component retrieval-layer" data-id="kb-search" style="left: 530px; top: 200px; width: 200px;">
+                <h3>Knowledge Base Search</h3>
+                <p>Search support docs</p>
+                <div class="tech-stack">Elasticsearch + Embeddings</div>
+            </div>
+
+            <div class="component retrieval-layer" data-id="ticket-history" style="left: 530px; top: 400px; width: 200px;">
+                <h3>Ticket History</h3>
+                <p>Similar past issues</p>
+                <div class="tech-stack">Vector similarity search</div>
+            </div>
+
+            <div class="component augmentation-layer" data-id="context-builder" style="left: 780px; top: 300px; width: 200px;">
+                <h3>Context Builder</h3>
+                <p>Merge relevant info</p>
+                <div class="tech-stack">RAG pipeline</div>
+            </div>
+
+            <div class="component generation-layer" data-id="response-gen" style="left: 1030px; top: 300px; width: 200px;">
+                <h3>Response Generation</h3>
+                <p>Generate helpful answer</p>
+                <div class="tech-stack">Fine-tuned GPT-4</div>
+            </div>
+
+            <div class="component output-layer" data-id="quality-check" style="left: 1280px; top: 300px; width: 180px;">
+                <h3>Quality Check</h3>
+                <p>Verify accuracy</p>
+                <div class="tech-stack">Guardrails AI</div>
+            </div>
+
+            <div class="component monitoring-layer" data-id="feedback-loop" style="left: 530px; top: 550px; width: 450px;">
+                <h3>Feedback Loop</h3>
+                <p>Customer satisfaction tracking & model improvement</p>
+                <div class="tech-stack">Analytics, A/B testing, Fine-tuning pipeline</div>
+            </div>
+        </div>
+
+        <!-- Research Assistant Pipeline -->
+        <div class="architecture hidden" id="research-pipeline">
+            <div class="grid-overlay"></div>
+            <h2 style="text-align: center; color: #4facfe; margin-bottom: 40px;">Research Assistant Pipeline</h2>
+            
+            <div class="component input-layer" data-id="research-query" style="left: 50px; top: 300px; width: 180px;">
+                <h3>Research Query</h3>
+                <p>Complex research question</p>
+                <div class="tech-stack">Multi-modal input</div>
+            </div>
+
+            <div class="component platform-layer" data-id="query-decompose" style="left: 280px; top: 300px; width: 200px;">
+                <h3>Query Decomposition</h3>
+                <p>Break into sub-queries</p>
+                <div class="tech-stack">Chain-of-thought</div>
+            </div>
+
+            <div class="component retrieval-layer" data-id="academic-search" style="left: 530px; top: 150px; width: 200px;">
+                <h3>Academic Search</h3>
+                <p>Scientific papers</p>
+                <div class="tech-stack">Semantic Scholar API</div>
+            </div>
+
+            <div class="component retrieval-layer" data-id="web-search" style="left: 530px; top: 300px; width: 200px;">
+                <h3>Web Search</h3>
+                <p>Current information</p>
+                <div class="tech-stack">Bing API + Scraping</div>
+            </div>
+
+            <div class="component retrieval-layer" data-id="data-sources" style="left: 530px; top: 450px; width: 200px;">
+                <h3>Data Sources</h3>
+                <p>Statistics & datasets</p>
+                <div class="tech-stack">APIs, SQL queries</div>
+            </div>
+
+            <div class="component augmentation-layer" data-id="synthesis" style="left: 780px; top: 300px; width: 200px;">
+                <h3>Information Synthesis</h3>
+                <p>Combine & verify sources</p>
+                <div class="tech-stack">Multi-doc summarization</div>
+            </div>
+
+            <div class="component generation-layer" data-id="report-gen" style="left: 1030px; top: 300px; width: 200px;">
+                <h3>Report Generation</h3>
+                <p>Comprehensive analysis</p>
+                <div class="tech-stack">Claude 3 Opus</div>
+            </div>
+
+            <div class="component output-layer" data-id="citations" style="left: 1280px; top: 300px; width: 180px;">
+                <h3>Citations & References</h3>
+                <p>Source attribution</p>
+                <div class="tech-stack">Citation formatter</div>
+            </div>
+
+            <div class="component monitoring-layer" data-id="fact-check" style="left: 530px; top: 600px; width: 450px;">
+                <h3>Fact Checking & Validation</h3>
+                <p>Verify claims against trusted sources</p>
+                <div class="tech-stack">Fact-check APIs, Cross-reference validation</div>
+            </div>
+        </div>
+
+        <!-- Code Generation Pipeline -->
+        <div class="architecture hidden" id="code-pipeline">
+            <div class="grid-overlay"></div>
+            <h2 style="text-align: center; color: #43e97b; margin-bottom: 40px;">Code Generation Pipeline</h2>
+            
+            <div class="component input-layer" data-id="code-request" style="left: 50px; top: 300px; width: 180px;">
+                <h3>Code Request</h3>
+                <p>Feature description</p>
+                <div class="tech-stack">Natural language spec</div>
+            </div>
+
+            <div class="component platform-layer" data-id="lang-detect" style="left: 280px; top: 300px; width: 200px;">
+                <h3>Language Detection</h3>
+                <p>Identify tech stack</p>
+                <div class="tech-stack">Context analyzer</div>
+            </div>
+
+            <div class="component retrieval-layer" data-id="code-search" style="left: 530px; top: 200px; width: 200px;">
+                <h3>Code Repository Search</h3>
+                <p>Similar implementations</p>
+                <div class="tech-stack">GitHub, Stack Overflow</div>
+            </div>
+
+            <div class="component retrieval-layer" data-id="doc-search" style="left: 530px; top: 400px; width: 200px;">
+                <h3>Documentation</h3>
+                <p>API docs & guides</p>
+                <div class="tech-stack">DevDocs, MDN</div>
+            </div>
+
+            <div class="component augmentation-layer" data-id="pattern-match" style="left: 780px; top: 300px; width: 200px;">
+                <h3>Pattern Matching</h3>
+                <p>Best practices</p>
+                <div class="tech-stack">Design patterns DB</div>
+            </div>
+
+            <div class="component generation-layer" data-id="code-gen" style="left: 1030px; top: 300px; width: 200px;">
+                <h3>Code Generation</h3>
+                <p>Generate implementation</p>
+                <div class="tech-stack">Codex, CodeLlama</div>
+            </div>
+
+            <div class="component security-layer" data-id="security-scan" style="left: 1280px; top: 200px; width: 180px;">
+                <h3>Security Scan</h3>
+                <p>Vulnerability check</p>
+                <div class="tech-stack">Snyk, Semgrep</div>
+            </div>
+
+            <div class="component output-layer" data-id="code-review" style="left: 1280px; top: 400px; width: 180px;">
+                <h3>Code Review</h3>
+                <p>Quality assurance</p>
+                <div class="tech-stack">SonarQube, ESLint</div>
+            </div>
+
+            <div class="component monitoring-layer" data-id="test-gen" style="left: 530px; top: 550px; width: 450px;">
+                <h3>Test Generation & Documentation</h3>
+                <p>Unit tests, integration tests, and API documentation</p>
+                <div class="tech-stack">Jest, PyTest, Swagger generation</div>
+            </div>
+        </div>
+
+        <!-- Document Analytics Pipeline -->
+        <div class="architecture hidden" id="analytics-pipeline">
+            <div class="grid-overlay"></div>
+            <h2 style="text-align: center; color: #fa709a; margin-bottom: 40px;">Document Analytics Pipeline</h2>
+            
+            <div class="component input-layer" data-id="doc-upload" style="left: 50px; top: 300px; width: 180px;">
+                <h3>Document Upload</h3>
+                <p>PDF, DOCX, TXT files</p>
+                <div class="tech-stack">File upload API</div>
+            </div>
+
+            <div class="component platform-layer" data-id="ocr-process" style="left: 280px; top: 300px; width: 200px;">
+                <h3>OCR Processing</h3>
+                <p>Extract text from images</p>
+                <div class="tech-stack">Tesseract, Azure OCR</div>
+            </div>
+
+            <div class="component embedding-layer" data-id="doc-chunk" style="left: 530px; top: 200px; width: 200px;">
+                <h3>Document Chunking</h3>
+                <p>Smart segmentation</p>
+                <div class="tech-stack">Sentence transformers</div>
+            </div>
+
+            <div class="component retrieval-layer" data-id="entity-extract" style="left: 530px; top: 400px; width: 200px;">
+                <h3>Entity Extraction</h3>
+                <p>Named entities & topics</p>
+                <div class="tech-stack">spaCy, BERT NER</div>
+            </div>
+
+            <div class="component augmentation-layer" data-id="classify" style="left: 780px; top: 300px; width: 200px;">
+                <h3>Classification</h3>
+                <p>Categorize content</p>
+                <div class="tech-stack">Multi-label classifier</div>
+            </div>
+
+            <div class="component generation-layer" data-id="insights" style="left: 1030px; top: 300px; width: 200px;">
+                <h3>Insight Generation</h3>
+                <p>Key findings & summary</p>
+                <div class="tech-stack">GPT-4 analysis</div>
+            </div>
+
+            <div class="component output-layer" data-id="viz" style="left: 1280px; top: 300px; width: 180px;">
+                <h3>Visualization</h3>
+                <p>Charts & dashboards</p>
+                <div class="tech-stack">D3.js, Plotly</div>
+            </div>
+
+            <div class="component monitoring-layer" data-id="export" style="left: 530px; top: 550px; width: 450px;">
+                <h3>Export & Integration</h3>
+                <p>API endpoints, webhooks, and BI tool integration</p>
+                <div class="tech-stack">REST API, Tableau connectors, PowerBI</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="save-notification" id="saveNotification"></div>
+
+    <div class="info-panel" id="infoPanel">
+        <span class="close" onclick="closeInfoPanel()">&times;</span>
+        <div id="infoPanelContent"></div>
+    </div>
+
+    <script>
+        let currentStack = 'ml';
+        let currentPipeline = null;
+        let isDragging = false;
+        let currentElement = null;
+        let startX = 0;
+        let startY = 0;
+        let offsetX = 0;
+        let offsetY = 0;
+        let snapToGrid = false;
+        const gridSize = 50;
+        
+        // Store original positions for reset
+        const originalPositions = {};
+        
+        // Save original positions when page loads
+        function saveOriginalPositions() {
+            document.querySelectorAll('.component').forEach(component => {
+                const id = component.getAttribute('data-id');
+                const stack = component.closest('.architecture').id;
+                const key = `${stack}-${id}`;
+                originalPositions[key] = {
+                    left: component.style.left,
+                    top: component.style.top
+                };
+            });
+        }
+        
+        // Initialize drag and drop when page loads
+        window.addEventListener('load', () => {
+            saveOriginalPositions();
+            initDragAndDrop();
+            drawConnections('ml');
+        });
+        
+        // Drag and drop functionality
+        function initDragAndDrop() {
+            document.querySelectorAll('.component').forEach(component => {
+                component.addEventListener('mousedown', startDrag);
+            });
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', endDrag);
+        }
+        
+        function startDrag(e) {
+            if (e.target.closest('.info-panel')) return;
+            
+            currentElement = e.target.closest('.component');
+            if (!currentElement) return;
+            
+            isDragging = true;
+            currentElement.classList.add('dragging');
+            
+            const rect = currentElement.getBoundingClientRect();
+            const parentRect = currentElement.parentElement.getBoundingClientRect();
+            
+            startX = rect.left - parentRect.left;
+            startY = rect.top - parentRect.top;
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            
+            // Bring to front
+            currentElement.style.zIndex = '1000';
+            
+            e.preventDefault();
+        }
+        
+        function drag(e) {
+            if (!isDragging || !currentElement) return;
+            
+            const parentRect = currentElement.parentElement.getBoundingClientRect();
+            let newX = e.clientX - parentRect.left - offsetX;
+            let newY = e.clientY - parentRect.top - offsetY;
+            
+            // Snap to grid if enabled
+            if (snapToGrid) {
+                newX = Math.round(newX / gridSize) * gridSize;
+                newY = Math.round(newY / gridSize) * gridSize;
+            }
+            
+            // Keep within bounds
+            newX = Math.max(0, Math.min(newX, parentRect.width - currentElement.offsetWidth));
+            newY = Math.max(0, Math.min(newY, parentRect.height - currentElement.offsetHeight));
+            
+            currentElement.style.left = newX + 'px';
+            currentElement.style.top = newY + 'px';
+            
+            // Redraw connections
+            document.querySelectorAll('.connection').forEach(conn => conn.remove());
+            if (currentStack) {
+                drawConnections(currentStack);
+            } else if (currentPipeline) {
+                drawPipelineConnections(currentPipeline);
+            }
+        }
+        
+        function endDrag(e) {
+            if (!isDragging) return;
+            
+            isDragging = false;
+            if (currentElement) {
+                currentElement.classList.remove('dragging');
+                currentElement.style.zIndex = '';
+                currentElement = null;
+            }
+        }
+        
+        // Component click handling (modified to not trigger while dragging)
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.component') && !isDragging) {
+                const component = e.target.closest('.component');
+                const id = component.getAttribute('data-id');
+                
+                // Don't show info panel if we just finished dragging
+                const wasDragging = component.classList.contains('dragging');
+                if (!wasDragging) {
+                    showComponentInfo(id);
+                    
+                    // Update active state
+                    document.querySelectorAll('.component').forEach(c => c.classList.remove('active'));
+                    component.classList.add('active');
+                }
+            }
+        });
+        
+        // Control functions
+        function toggleGrid() {
+            const grids = document.querySelectorAll('.grid-overlay');
+            const btn = event.target;
+            
+            grids.forEach(grid => {
+                grid.classList.toggle('show');
+            });
+            
+            btn.classList.toggle('active');
+            snapToGrid = !snapToGrid;
+        }
+        
+        function resetLayout() {
+            const currentArchitecture = document.getElementById(`${currentStack}-stack`);
+            currentArchitecture.querySelectorAll('.component').forEach(component => {
+                const id = component.getAttribute('data-id');
+                const key = `${currentStack}-stack-${id}`;
+                if (originalPositions[key]) {
+                    component.style.left = originalPositions[key].left;
+                    component.style.top = originalPositions[key].top;
+                }
+            });
+            
+            // Redraw connections
+            document.querySelectorAll('.connection').forEach(conn => conn.remove());
+            drawConnections(currentStack);
+            
+            showNotification('Layout reset to original positions');
+        }
+        
+        function saveLayout() {
+            const layouts = {};
+            document.querySelectorAll('.architecture').forEach(architecture => {
+                const stackId = architecture.id;
+                layouts[stackId] = {};
+                
+                architecture.querySelectorAll('.component').forEach(component => {
+                    const id = component.getAttribute('data-id');
+                    layouts[stackId][id] = {
+                        left: component.style.left,
+                        top: component.style.top
+                    };
+                });
+            });
+            
+            localStorage.setItem('ai-rag-layouts', JSON.stringify(layouts));
+            showNotification('Layout saved successfully!');
+        }
+        
+        function loadLayout() {
+            const saved = localStorage.getItem('ai-rag-layouts');
+            if (!saved) {
+                showNotification('No saved layout found');
+                return;
+            }
+            
+            const layouts = JSON.parse(saved);
+            Object.keys(layouts).forEach(stackId => {
+                const architecture = document.getElementById(stackId);
+                if (architecture) {
+                    Object.keys(layouts[stackId]).forEach(componentId => {
+                        const component = architecture.querySelector(`[data-id="${componentId}"]`);
+                        if (component) {
+                            component.style.left = layouts[stackId][componentId].left;
+                            component.style.top = layouts[stackId][componentId].top;
+                        }
+                    });
+                }
+            });
+            
+            // Redraw connections
+            document.querySelectorAll('.connection').forEach(conn => conn.remove());
+            drawConnections(currentStack);
+            
+            showNotification('Layout loaded successfully!');
+        }
+        
+        function showNotification(message) {
+            const notification = document.getElementById('saveNotification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+        
+        const componentInfo = {
+            // ML Architecture Components
+            input: {
+                title: "Input Interface",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "The input interface handles multi-modal data including text, images, audio, and structured data. It preprocesses and normalizes inputs for optimal processing."
+                    },
+                    {
+                        title: "Software Stack",
+                        list: [
+                            "FastAPI for REST endpoints",
+                            "gRPC for high-performance RPC",
+                            "GraphQL for flexible queries",
+                            "WebSocket for real-time streams",
+                            "Protocol Buffers for serialization"
+                        ]
+                    },
+                    {
+                        title: "Security Measures",
+                        list: [
+                            "Input validation and sanitization",
+                            "Rate limiting per API key",
+                            "DDoS protection via CloudFlare",
+                            "Content filtering for harmful inputs",
+                            "Request signing with HMAC"
+                        ]
+                    }
+                ]
+            },
+            embedding: {
+                title: "Embedding Engine",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Converts inputs into high-dimensional vector representations that capture semantic meaning. Uses state-of-the-art embedding models for different modalities."
+                    },
+                    {
+                        title: "Hardware Requirements",
+                        list: [
+                            "NVIDIA A100 80GB for large models",
+                            "NVLink for multi-GPU scaling",
+                            "512GB system RAM minimum",
+                            "NVMe storage for model weights",
+                            "InfiniBand for distributed training"
+                        ]
+                    },
+                    {
+                        title: "Optimization Stack",
+                        list: [
+                            "TensorRT for inference optimization",
+                            "ONNX for model portability",
+                            "Triton Inference Server",
+                            "Mixed precision (FP16/INT8)",
+                            "Dynamic batching for throughput"
+                        ]
+                    }
+                ]
+            },
+            vectordb: {
+                title: "Vector Database",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "High-performance vector storage and retrieval system optimized for similarity search at scale. Supports billions of vectors with sub-second query times."
+                    },
+                    {
+                        title: "Database Technologies",
+                        list: [
+                            "Pinecone for managed vector search",
+                            "Weaviate with hybrid search capabilities",
+                            "FAISS for on-premise deployment",
+                            "Qdrant for distributed systems",
+                            "Milvus for large-scale operations"
+                        ]
+                    },
+                    {
+                        title: "Performance Optimization",
+                        list: [
+                            "Hierarchical Navigable Small Worlds (HNSW)",
+                            "Product quantization for compression",
+                            "GPU-accelerated indexing",
+                            "Sharding across multiple nodes",
+                            "In-memory caching for hot vectors"
+                        ]
+                    }
+                ]
+            },
+            retrieval: {
+                title: "Retrieval System",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Sophisticated retrieval pipeline that combines multiple search strategies to find the most relevant context for augmentation."
+                    },
+                    {
+                        title: "Retrieval Strategies",
+                        list: [
+                            "Dense retrieval with neural embeddings",
+                            "Sparse retrieval with BM25/TF-IDF",
+                            "Hybrid search combining dense and sparse",
+                            "Cross-encoder re-ranking",
+                            "Query expansion and reformulation"
+                        ]
+                    },
+                    {
+                        title: "Advanced Features",
+                        list: [
+                            "Learned sparse representations (SPLADE)",
+                            "ColBERT for late interaction",
+                            "Multi-hop reasoning chains",
+                            "Temporal and recency weighting",
+                            "Personalization based on user context"
+                        ]
+                    }
+                ]
+            },
+            augmentation: {
+                title: "Context Augmentation",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Intelligently combines retrieved information with the original query to create an enriched context for the language model."
+                    },
+                    {
+                        title: "Augmentation Strategies",
+                        list: [
+                            "Dynamic prompt engineering",
+                            "Context window optimization",
+                            "Relevance-based truncation",
+                            "Multi-document summarization",
+                            "Chain-of-thought prompting"
+                        ]
+                    },
+                    {
+                        title: "Implementation Details",
+                        code: `def augment_context(query, retrieved_docs):
+    # Score and rank documents
+    ranked_docs = rerank_documents(query, retrieved_docs)
+    
+    # Compress long documents
+    compressed = compress_context(ranked_docs, max_tokens=4000)
+    
+    # Build augmented prompt
+    prompt = f"""Answer based on the following context:
+    
+    {compressed}
+    
+    Question: {query}
+    Answer: """`
+                    }
+                ]
+            },
+            llm: {
+                title: "Large Language Model",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "State-of-the-art language model that generates responses based on the augmented context. Supports multiple model architectures and sizes."
+                    },
+                    {
+                        title: "Model Options",
+                        list: [
+                            "GPT-4 Turbo (128k context window)",
+                            "Claude 3 Opus for complex reasoning",
+                            "Llama 3 70B for open-source deployment",
+                            "Mistral-Large for efficiency",
+                            "Custom fine-tuned models"
+                        ]
+                    },
+                    {
+                        title: "Inference Optimization",
+                        list: [
+                            "Continuous batching for throughput",
+                            "KV-cache optimization",
+                            "Speculative decoding",
+                            "Tensor parallelism across GPUs",
+                            "Dynamic routing based on complexity"
+                        ]
+                    }
+                ]
+            },
+            output: {
+                title: "Output Processing",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Post-processes and optimizes the generated responses for quality, safety, and user experience."
+                    },
+                    {
+                        title: "Processing Pipeline",
+                        list: [
+                            "Response validation and formatting",
+                            "Citation injection and verification",
+                            "Safety filtering and moderation",
+                            "Response caching for efficiency",
+                            "Multi-format output generation"
+                        ]
+                    },
+                    {
+                        title: "Quality Assurance",
+                        list: [
+                            "Hallucination detection algorithms",
+                            "Fact verification against sources",
+                            "Consistency checking",
+                            "Bias detection and mitigation",
+                            "Response quality scoring"
+                        ]
+                    }
+                ]
+            },
+            cache: {
+                title: "Cache Layer",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Intelligent caching system that stores and retrieves previous responses to improve latency and reduce computational costs."
+                    },
+                    {
+                        title: "Caching Architecture",
+                        list: [
+                            "Multi-tier cache (L1: Memory, L2: Redis, L3: Disk)",
+                            "Semantic similarity-based caching",
+                            "Cache key generation with embeddings",
+                            "TTL based on query patterns",
+                            "Cache warming for popular queries"
+                        ]
+                    },
+                    {
+                        title: "Performance Metrics",
+                        list: [
+                            "95% cache hit rate for common queries",
+                            "Sub-10ms cache retrieval",
+                            "100TB total cache capacity",
+                            "Automatic cache invalidation",
+                            "Distributed cache synchronization"
+                        ]
+                    }
+                ]
+            },
+            rerank: {
+                title: "Re-ranking Module",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Advanced re-ranking system that optimizes the order of retrieved documents based on relevance and quality signals."
+                    },
+                    {
+                        title: "Re-ranking Models",
+                        list: [
+                            "Cross-encoder architectures (BERT-based)",
+                            "MonoT5 for passage ranking",
+                            "ColBERT for efficient re-ranking",
+                            "Learning-to-rank with LambdaMART",
+                            "Ensemble ranking methods"
+                        ]
+                    },
+                    {
+                        title: "Ranking Signals",
+                        list: [
+                            "Semantic relevance scores",
+                            "Source authority and freshness",
+                            "User interaction feedback",
+                            "Query-document alignment metrics",
+                            "Diversity and coverage optimization"
+                        ]
+                    }
+                ]
+            },
+            mlmonitoring: {
+                title: "ML Monitoring & Observability",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Comprehensive monitoring system tracking model performance, data drift, and system health across the entire ML pipeline."
+                    },
+                    {
+                        title: "Monitoring Capabilities",
+                        list: [
+                            "Real-time performance metrics",
+                            "Data drift detection algorithms",
+                            "Model degradation alerts",
+                            "A/B testing framework",
+                            "Feature importance tracking"
+                        ]
+                    },
+                    {
+                        title: "Tools & Integration",
+                        list: [
+                            "Weights & Biases for experiment tracking",
+                            "MLflow for model versioning",
+                            "Prometheus + Grafana dashboards",
+                            "Custom alerting with PagerDuty",
+                            "Automated retraining triggers"
+                        ]
+                    }
+                ]
+            },
+            
+            // Software Stack Components
+            "api-gateway": {
+                title: "API Gateway",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Central entry point for all API requests, handling routing, rate limiting, authentication, and protocol translation."
+                    },
+                    {
+                        title: "Core Features",
+                        list: [
+                            "Request routing and load balancing",
+                            "Rate limiting and quotas (10k RPS)",
+                            "API key management and rotation",
+                            "Request/response transformation",
+                            "Circuit breaker patterns"
+                        ]
+                    },
+                    {
+                        title: "Implementation",
+                        code: `# Kong configuration example
+services:
+  - name: rag-api
+    url: http://backend:8080
+    routes:
+      - paths: ["/api/v1"]
+        methods: ["GET", "POST"]
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          policy: redis`
+                    }
+                ]
+            },
+            "web-app": {
+                title: "Web Application",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Modern web frontend providing intuitive user interfaces for interacting with the RAG system through responsive, real-time applications."
+                    },
+                    {
+                        title: "Tech Stack",
+                        list: [
+                            "React 18 with Server Components",
+                            "Next.js 14 for SSR/SSG",
+                            "TypeScript for type safety",
+                            "TailwindCSS for styling",
+                            "WebSocket for real-time updates"
+                        ]
+                    },
+                    {
+                        title: "Features",
+                        list: [
+                            "Real-time streaming responses",
+                            "Multi-modal input support",
+                            "Conversation history management",
+                            "Code syntax highlighting",
+                            "Progressive Web App capabilities"
+                        ]
+                    }
+                ]
+            },
+            mobile: {
+                title: "Mobile SDKs",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Native mobile SDKs enabling seamless integration of RAG capabilities into iOS and Android applications."
+                    },
+                    {
+                        title: "SDK Features",
+                        list: [
+                            "Native Swift/Kotlin implementations",
+                            "Offline mode with local caching",
+                            "Voice input/output integration",
+                            "Push notification support",
+                            "Biometric authentication"
+                        ]
+                    },
+                    {
+                        title: "Cross-Platform Options",
+                        list: [
+                            "Flutter for unified codebase",
+                            "React Native for web developers",
+                            "Capacitor for progressive web apps",
+                            "Unity plugin for AR/VR apps",
+                            "Xamarin for .NET developers"
+                        ]
+                    }
+                ]
+            },
+            webhooks: {
+                title: "Webhook Service",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Event-driven integration service enabling real-time notifications and automated workflows with external systems."
+                    },
+                    {
+                        title: "Capabilities",
+                        list: [
+                            "Configurable event triggers",
+                            "Retry logic with exponential backoff",
+                            "Payload transformation",
+                            "Signature verification (HMAC)",
+                            "Dead letter queue handling"
+                        ]
+                    },
+                    {
+                        title: "Integration Examples",
+                        list: [
+                            "Slack/Teams notifications",
+                            "CRM system updates",
+                            "Analytics event streaming",
+                            "Third-party AI services",
+                            "Automated testing triggers"
+                        ]
+                    }
+                ]
+            },
+            orchestration: {
+                title: "Container Orchestration",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Manages containerized workloads and services, handling deployment, scaling, and operations of application containers across clusters."
+                    },
+                    {
+                        title: "Kubernetes Architecture",
+                        list: [
+                            "Multi-zone clusters for HA",
+                            "Auto-scaling with HPA/VPA",
+                            "StatefulSets for databases",
+                            "GPU operator for ML workloads",
+                            "Service mesh integration (Istio)"
+                        ]
+                    },
+                    {
+                        title: "Deployment Strategy",
+                        code: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: embedding-service
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    spec:
+      containers:
+      - name: embedding
+        resources:
+          limits:
+            nvidia.com/gpu: 1`
+                    }
+                ]
+            },
+            "service-mesh": {
+                title: "Service Mesh",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Provides secure, observable, and reliable microservice-to-microservice communication with advanced traffic management."
+                    },
+                    {
+                        title: "Core Features",
+                        list: [
+                            "mTLS encryption between services",
+                            "Circuit breaking and retries",
+                            "A/B testing and canary deployments",
+                            "Distributed tracing with Jaeger",
+                            "Service discovery and load balancing"
+                        ]
+                    },
+                    {
+                        title: "Traffic Management",
+                        list: [
+                            "Intelligent request routing",
+                            "Fault injection for testing",
+                            "Rate limiting per service",
+                            "Request mirroring",
+                            "Timeout and retry policies"
+                        ]
+                    }
+                ]
+            },
+            "message-queue": {
+                title: "Message Queue",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Asynchronous messaging system enabling decoupled, scalable communication between services with guaranteed delivery."
+                    },
+                    {
+                        title: "Queue Technologies",
+                        list: [
+                            "Apache Kafka for high throughput",
+                            "RabbitMQ for complex routing",
+                            "AWS SQS for managed queues",
+                            "Redis Streams for simplicity",
+                            "NATS for edge computing"
+                        ]
+                    },
+                    {
+                        title: "Use Cases",
+                        list: [
+                            "Asynchronous model inference",
+                            "Event sourcing patterns",
+                            "Log aggregation pipeline",
+                            "Real-time data streaming",
+                            "Workflow orchestration"
+                        ]
+                    }
+                ]
+            },
+            workflow: {
+                title: "Workflow Engine",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Orchestrates complex multi-step processes, managing dependencies, retries, and error handling across distributed systems."
+                    },
+                    {
+                        title: "Workflow Platforms",
+                        list: [
+                            "Apache Airflow for data pipelines",
+                            "Temporal for durable execution",
+                            "Argo Workflows for Kubernetes",
+                            "Prefect for modern dataflow",
+                            "Step Functions for AWS"
+                        ]
+                    },
+                    {
+                        title: "Common Workflows",
+                        list: [
+                            "Model training pipelines",
+                            "Data preprocessing chains",
+                            "Document indexing workflows",
+                            "Batch inference jobs",
+                            "System maintenance tasks"
+                        ]
+                    }
+                ]
+            },
+            compute: {
+                title: "Compute Resources",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Scalable compute infrastructure providing the processing power for all system components with auto-scaling capabilities."
+                    },
+                    {
+                        title: "Instance Types",
+                        list: [
+                            "GPU instances for ML inference",
+                            "CPU-optimized for general compute",
+                            "Memory-optimized for caching",
+                            "Storage-optimized for databases",
+                            "Spot instances for cost savings"
+                        ]
+                    },
+                    {
+                        title: "Auto-scaling Policies",
+                        list: [
+                            "Predictive scaling using ML",
+                            "Target tracking (CPU/Memory)",
+                            "Schedule-based scaling",
+                            "Custom metrics scaling",
+                            "Multi-region failover"
+                        ]
+                    }
+                ]
+            },
+            storage: {
+                title: "Storage Systems",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Multi-tier storage architecture providing persistent, scalable, and highly available data storage across different access patterns."
+                    },
+                    {
+                        title: "Storage Tiers",
+                        list: [
+                            "Hot storage: NVMe SSDs for vectors",
+                            "Warm storage: S3 Standard for models",
+                            "Cold storage: Glacier for archives",
+                            "CDN: CloudFront for static assets",
+                            "Block storage: EBS for databases"
+                        ]
+                    },
+                    {
+                        title: "Data Management",
+                        list: [
+                            "Automated lifecycle policies",
+                            "Cross-region replication",
+                            "Point-in-time recovery",
+                            "Encryption at rest and in transit",
+                            "Compliance data retention"
+                        ]
+                    }
+                ]
+            },
+            networking: {
+                title: "Networking",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Global content delivery and load balancing infrastructure ensuring low latency and high availability worldwide."
+                    },
+                    {
+                        title: "CDN Configuration",
+                        list: [
+                            "300+ edge locations globally",
+                            "Dynamic content acceleration",
+                            "WebSocket support at edge",
+                            "DDoS protection built-in",
+                            "Custom SSL certificates"
+                        ]
+                    },
+                    {
+                        title: "Load Balancing",
+                        list: [
+                            "Application Load Balancer (Layer 7)",
+                            "Network Load Balancer (Layer 4)",
+                            "Global Server Load Balancing",
+                            "Health checks and failover",
+                            "Session affinity options"
+                        ]
+                    }
+                ]
+            },
+            serverless: {
+                title: "Serverless Computing",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Event-driven compute platform for running code without managing servers, ideal for sporadic workloads and microservices."
+                    },
+                    {
+                        title: "Function Platforms",
+                        list: [
+                            "AWS Lambda for general compute",
+                            "Lambda@Edge for CDN logic",
+                            "Google Cloud Functions",
+                            "Azure Functions with bindings",
+                            "Cloudflare Workers for edge"
+                        ]
+                    },
+                    {
+                        title: "Use Cases",
+                        list: [
+                            "Image/document preprocessing",
+                            "Webhook processing",
+                            "API response transformation",
+                            "Scheduled maintenance tasks",
+                            "Real-time data validation"
+                        ]
+                    }
+                ]
+            },
+            databases: {
+                title: "Database Systems",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Multi-model database architecture supporting structured, semi-structured, and unstructured data with ACID compliance."
+                    },
+                    {
+                        title: "Database Types",
+                        list: [
+                            "PostgreSQL for transactional data",
+                            "MongoDB for document storage",
+                            "Cassandra for time-series data",
+                            "Redis for caching and sessions",
+                            "Neo4j for graph relationships"
+                        ]
+                    },
+                    {
+                        title: "High Availability",
+                        list: [
+                            "Multi-master replication",
+                            "Automatic failover",
+                            "Read replicas for scaling",
+                            "Point-in-time recovery",
+                            "Cross-region DR setup"
+                        ]
+                    }
+                ]
+            },
+            "data-lake": {
+                title: "Data Lake",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Centralized repository storing structured and unstructured data at scale, supporting analytics and machine learning workloads."
+                    },
+                    {
+                        title: "Lake Architecture",
+                        list: [
+                            "Delta Lake for ACID transactions",
+                            "Apache Iceberg for time travel",
+                            "Parquet for columnar storage",
+                            "Data catalog with Glue/Hive",
+                            "Schema evolution support"
+                        ]
+                    },
+                    {
+                        title: "Data Processing",
+                        list: [
+                            "Spark for batch processing",
+                            "Presto for SQL analytics",
+                            "dbt for transformations",
+                            "Great Expectations for quality",
+                            "Databricks for unified analytics"
+                        ]
+                    }
+                ]
+            },
+            streaming: {
+                title: "Stream Processing",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Real-time data processing pipeline handling millions of events per second with exactly-once semantics and low latency."
+                    },
+                    {
+                        title: "Streaming Platforms",
+                        list: [
+                            "Apache Flink for stateful processing",
+                            "Spark Streaming for micro-batches",
+                            "Kafka Streams for simple cases",
+                            "Apache Beam for portability",
+                            "AWS Kinesis for managed service"
+                        ]
+                    },
+                    {
+                        title: "Processing Patterns",
+                        list: [
+                            "Event sourcing architecture",
+                            "CQRS implementation",
+                            "Real-time aggregations",
+                            "Anomaly detection",
+                            "CDC from databases"
+                        ]
+                    }
+                ]
+            },
+            
+            // Hardware Infrastructure Components
+            "edge-devices": {
+                title: "Edge Devices",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Local AI processing units deployed at the network edge for ultra-low latency inference and data preprocessing."
+                    },
+                    {
+                        title: "Hardware Options",
+                        list: [
+                            "NVIDIA Jetson AGX Orin (275 TOPS)",
+                            "Google Coral TPU (4 TOPS)",
+                            "Intel Neural Compute Stick",
+                            "Qualcomm Cloud AI 100",
+                            "Apple Neural Engine devices"
+                        ]
+                    },
+                    {
+                        title: "Edge Capabilities",
+                        list: [
+                            "Sub-10ms inference latency",
+                            "Offline operation mode",
+                            "Privacy-preserving local processing",
+                            "5W-30W power consumption",
+                            "Hardware video encoding"
+                        ]
+                    }
+                ]
+            },
+            "edge-servers": {
+                title: "Edge Servers",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Regional compute nodes providing localized processing power closer to end users for improved latency and data sovereignty."
+                    },
+                    {
+                        title: "Server Specifications",
+                        list: [
+                            "Dell EMC XR11/XR12 ruggedized",
+                            "HPE EdgeLine EL8000",
+                            "Lenovo ThinkSystem SE350",
+                            "NVIDIA EGX platform",
+                            "AWS Outposts for hybrid"
+                        ]
+                    },
+                    {
+                        title: "Deployment Scenarios",
+                        list: [
+                            "Retail stores for customer analytics",
+                            "Manufacturing for quality control",
+                            "Healthcare for patient monitoring",
+                            "Smart cities infrastructure",
+                            "Autonomous vehicle support"
+                        ]
+                    }
+                ]
+            },
+            "5g-mec": {
+                title: "5G Multi-Access Edge Computing",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Ultra-low latency computing at 5G cell towers enabling real-time AI applications with sub-millisecond response times."
+                    },
+                    {
+                        title: "MEC Platforms",
+                        list: [
+                            "AWS Wavelength zones",
+                            "Azure Private MEC",
+                            "Google Distributed Cloud Edge",
+                            "Verizon 5G Edge",
+                            "AT&T Multi-Access Edge"
+                        ]
+                    },
+                    {
+                        title: "Performance Metrics",
+                        list: [
+                            "1-5ms latency to devices",
+                            "10Gbps throughput",
+                            "99.999% availability",
+                            "Network slicing support",
+                            "Edge-native applications"
+                        ]
+                    }
+                ]
+            },
+            "gpu-clusters": {
+                title: "GPU Clusters",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "High-performance GPU clusters designed for training and inference of large language models and neural networks."
+                    },
+                    {
+                        title: "Hardware Specifications",
+                        list: [
+                            "NVIDIA DGX A100 systems",
+                            "8x A100 80GB per node",
+                            "600GB/s NVSwitch fabric",
+                            "3.2TB/s bisection bandwidth",
+                            "HDR InfiniBand interconnect"
+                        ]
+                    },
+                    {
+                        title: "Performance Metrics",
+                        list: [
+                            "5 petaFLOPS FP16 per node",
+                            "640GB HBM2e total memory",
+                            "2TB/s memory bandwidth",
+                            "Scale to 1000s of GPUs",
+                            "90%+ scaling efficiency"
+                        ]
+                    }
+                ]
+            },
+            "tpu-pods": {
+                title: "TPU Pods",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Google's custom tensor processing units optimized for large-scale machine learning with exceptional performance per watt."
+                    },
+                    {
+                        title: "TPU v4 Specifications",
+                        list: [
+                            "275 TFLOPS per chip",
+                            "32GB HBM per chip",
+                            "4096 chips per pod",
+                            "1.1 exaflops total",
+                            "90% efficiency at scale"
+                        ]
+                    },
+                    {
+                        title: "Advantages",
+                        list: [
+                            "3x performance/watt vs GPU",
+                            "Native bfloat16 support",
+                            "Optimized for transformers",
+                            "Liquid cooling for density",
+                            "Direct integration with GCP"
+                        ]
+                    }
+                ]
+            },
+            "cpu-nodes": {
+                title: "CPU Compute Nodes",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "General-purpose compute nodes handling non-ML workloads, data preprocessing, and system orchestration tasks."
+                    },
+                    {
+                        title: "Server Configurations",
+                        list: [
+                            "AMD EPYC 9654 (96 cores)",
+                            "Intel Xeon Platinum 8480+",
+                            "2-4TB DDR5 RAM per node",
+                            "25GbE or 100GbE networking",
+                            "NVMe storage arrays"
+                        ]
+                    },
+                    {
+                        title: "Workload Types",
+                        list: [
+                            "Data ETL pipelines",
+                            "API serving layers",
+                            "Database operations",
+                            "Container orchestration",
+                            "Monitoring and logging"
+                        ]
+                    }
+                ]
+            },
+            fpga: {
+                title: "FPGA Acceleration Arrays",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Field-programmable gate arrays providing custom hardware acceleration for specific algorithms and low-latency processing."
+                    },
+                    {
+                        title: "FPGA Platforms",
+                        list: [
+                            "Xilinx Alveo U250/U280",
+                            "Intel Stratix 10 NX",
+                            "AWS F1 instances",
+                            "Microsoft Project Brainwave",
+                            "Achronix Speedster7t"
+                        ]
+                    },
+                    {
+                        title: "Acceleration Use Cases",
+                        list: [
+                            "Real-time inference (<1ms)",
+                            "Custom encryption/compression",
+                            "Network packet processing",
+                            "Database query acceleration",
+                            "Genomics and bioinformatics"
+                        ]
+                    }
+                ]
+            },
+            "nvme-storage": {
+                title: "NVMe Storage Arrays",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Ultra-fast solid-state storage arrays providing microsecond latency for hot data and model weights."
+                    },
+                    {
+                        title: "Storage Systems",
+                        list: [
+                            "Pure Storage FlashArray//X",
+                            "NetApp AFF A900",
+                            "Dell EMC PowerStore",
+                            "HPE Primera",
+                            "Custom NVMe-oF arrays"
+                        ]
+                    },
+                    {
+                        title: "Performance Specs",
+                        list: [
+                            "25GB/s throughput",
+                            "10M+ IOPS",
+                            "100μs latency",
+                            "6:1 data reduction",
+                            "100PB effective capacity"
+                        ]
+                    }
+                ]
+            },
+            "object-storage": {
+                title: "Object Storage Systems",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Scalable object storage for unstructured data, model artifacts, and training datasets with S3-compatible APIs."
+                    },
+                    {
+                        title: "Storage Platforms",
+                        list: [
+                            "MinIO for on-premise S3",
+                            "Ceph with RADOS gateway",
+                            "NetApp StorageGRID",
+                            "Dell ECS",
+                            "Pure Storage FlashBlade"
+                        ]
+                    },
+                    {
+                        title: "Features",
+                        list: [
+                            "Multi-petabyte scalability",
+                            "Erasure coding for efficiency",
+                            "Multi-site replication",
+                            "S3 API compatibility",
+                            "Immutable object locks"
+                        ]
+                    }
+                ]
+            },
+            "tape-archive": {
+                title: "Tape Archive Systems",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Long-term archival storage for compliance, backup, and cold data with the lowest cost per TB."
+                    },
+                    {
+                        title: "Tape Technologies",
+                        list: [
+                            "LTO-9 (18TB native)",
+                            "IBM TS4500 library",
+                            "Quantum Scalar i6000",
+                            "Spectra Logic TFinity",
+                            "Oracle StorageTek"
+                        ]
+                    },
+                    {
+                        title: "Archive Strategy",
+                        list: [
+                            "30-year media longevity",
+                            "$0.004/GB storage cost",
+                            "Air-gapped security",
+                            "WORM compliance mode",
+                            "Automated migration"
+                        ]
+                    }
+                ]
+            },
+            infiniband: {
+                title: "InfiniBand Fabric",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Ultra-low latency, high-bandwidth interconnect fabric essential for distributed training and HPC workloads."
+                    },
+                    {
+                        title: "Network Specifications",
+                        list: [
+                            "HDR 200Gb/s per port",
+                            "0.6μs port-to-port latency",
+                            "RDMA for zero-copy",
+                            "Adaptive routing",
+                            "In-network computing"
+                        ]
+                    },
+                    {
+                        title: "Topology Design",
+                        list: [
+                            "Fat-tree architecture",
+                            "Dragonfly+ for scale",
+                            "Non-blocking design",
+                            "1:1 oversubscription",
+                            "Automatic failover"
+                        ]
+                    }
+                ]
+            },
+            backbone: {
+                title: "Network Backbone",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "High-capacity network infrastructure connecting data centers, regions, and edge locations globally."
+                    },
+                    {
+                        title: "Network Architecture",
+                        list: [
+                            "400GbE backbone links",
+                            "DWDM for long-haul",
+                            "MPLS for traffic engineering",
+                            "BGP for routing",
+                            "SD-WAN overlay"
+                        ]
+                    },
+                    {
+                        title: "Connectivity",
+                        list: [
+                            "Multiple Tier 1 ISPs",
+                            "Private peering (AWS Direct)",
+                            "Internet exchanges (IX)",
+                            "Submarine cable diversity",
+                            "Satellite backup links"
+                        ]
+                    }
+                ]
+            },
+            "load-balancers": {
+                title: "Load Balancing Infrastructure",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "High-performance load balancers distributing traffic across services with advanced health checking and routing."
+                    },
+                    {
+                        title: "Load Balancer Types",
+                        list: [
+                            "F5 BIG-IP for enterprise",
+                            "HAProxy for open source",
+                            "NGINX Plus for apps",
+                            "Cloudflare Load Balancer",
+                            "AWS ALB/NLB/GLB"
+                        ]
+                    },
+                    {
+                        title: "Capabilities",
+                        list: [
+                            "10M+ requests/second",
+                            "SSL/TLS termination",
+                            "Geographic routing",
+                            "WebSocket support",
+                            "DDoS protection"
+                        ]
+                    }
+                ]
+            },
+            
+            // Security Architecture Components
+            iam: {
+                title: "Identity & Access Management",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Comprehensive IAM system managing user identities, authentication, authorization, and access policies across all services."
+                    },
+                    {
+                        title: "Core Components",
+                        list: [
+                            "User directory integration (LDAP/AD)",
+                            "Role-based access control (RBAC)",
+                            "Attribute-based access (ABAC)",
+                            "Just-in-time access provisioning",
+                            "Privileged access management"
+                        ]
+                    },
+                    {
+                        title: "Security Features",
+                        list: [
+                            "Zero-trust architecture",
+                            "Continuous authentication",
+                            "Risk-based access policies",
+                            "Session management",
+                            "Audit trail for compliance"
+                        ]
+                    }
+                ]
+            },
+            mfa: {
+                title: "Multi-Factor Authentication",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Enhanced authentication requiring multiple verification methods to ensure user identity and prevent unauthorized access."
+                    },
+                    {
+                        title: "Authentication Methods",
+                        list: [
+                            "TOTP (Google Authenticator)",
+                            "Hardware tokens (YubiKey)",
+                            "Biometric verification",
+                            "SMS/Voice (backup only)",
+                            "Push notifications (Duo)"
+                        ]
+                    },
+                    {
+                        title: "Implementation",
+                        list: [
+                            "Risk-based MFA triggers",
+                            "Remember trusted devices",
+                            "Backup codes generation",
+                            "Admin override procedures",
+                            "Passwordless options"
+                        ]
+                    }
+                ]
+            },
+            sso: {
+                title: "Single Sign-On Federation",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Centralized authentication enabling users to access multiple applications with one set of credentials."
+                    },
+                    {
+                        title: "SSO Protocols",
+                        list: [
+                            "SAML 2.0 for enterprise",
+                            "OAuth 2.0 + OIDC",
+                            "WS-Federation legacy",
+                            "Kerberos for internal",
+                            "LDAP authentication"
+                        ]
+                    },
+                    {
+                        title: "Federation Partners",
+                        list: [
+                            "Active Directory (ADFS)",
+                            "Google Workspace",
+                            "GitHub Enterprise",
+                            "Okta Universal Directory",
+                            "Custom IdP integration"
+                        ]
+                    }
+                ]
+            },
+            pam: {
+                title: "Privileged Access Management",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Secure management of administrative and privileged accounts with enhanced monitoring and controls."
+                    },
+                    {
+                        title: "PAM Features",
+                        list: [
+                            "Password vault with rotation",
+                            "Session recording and playback",
+                            "Approval workflows",
+                            "Time-limited elevation",
+                            "Break-glass procedures"
+                        ]
+                    },
+                    {
+                        title: "Compliance Controls",
+                        list: [
+                            "SOX compliance reporting",
+                            "Segregation of duties",
+                            "Privilege analytics",
+                            "Anomaly detection",
+                            "Forensic audit trails"
+                        ]
+                    }
+                ]
+            },
+            waf: {
+                title: "Web Application Firewall",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Application-layer security protecting against web exploits, bot attacks, and malicious traffic patterns."
+                    },
+                    {
+                        title: "Protection Features",
+                        list: [
+                            "OWASP Top 10 coverage",
+                            "Custom rule creation",
+                            "Bot detection and mitigation",
+                            "Rate limiting by IP/User",
+                            "Geographic blocking"
+                        ]
+                    },
+                    {
+                        title: "WAF Deployment",
+                        list: [
+                            "Edge deployment (CloudFlare)",
+                            "Regional WAF (AWS/Azure)",
+                            "On-premise ModSecurity",
+                            "API-specific protection",
+                            "ML-based threat detection"
+                        ]
+                    }
+                ]
+            },
+            encryption: {
+                title: "Encryption Services",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Comprehensive encryption for data at rest and in transit using industry-standard algorithms and key management."
+                    },
+                    {
+                        title: "Encryption Standards",
+                        list: [
+                            "AES-256-GCM for data at rest",
+                            "TLS 1.3 for transit",
+                            "E2E encryption for messages",
+                            "Homomorphic for computation",
+                            "Post-quantum algorithms"
+                        ]
+                    },
+                    {
+                        title: "Key Management",
+                        list: [
+                            "HSM for key generation",
+                            "Key rotation policies",
+                            "Bring Your Own Key (BYOK)",
+                            "Key escrow for compliance",
+                            "Quantum-safe key exchange"
+                        ]
+                    }
+                ]
+            },
+            secrets: {
+                title: "Secrets Management",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Centralized storage and management of sensitive credentials, API keys, and certificates with audit trails."
+                    },
+                    {
+                        title: "Secret Types",
+                        list: [
+                            "Database credentials",
+                            "API keys and tokens",
+                            "SSL/TLS certificates",
+                            "SSH keys",
+                            "Encryption keys"
+                        ]
+                    },
+                    {
+                        title: "Management Features",
+                        list: [
+                            "Dynamic secret generation",
+                            "Automatic rotation",
+                            "Lease and TTL management",
+                            "Secret versioning",
+                            "Emergency break-glass"
+                        ]
+                    }
+                ]
+            },
+            dlp: {
+                title: "Data Loss Prevention",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Monitors and prevents sensitive data exfiltration across all channels including API responses and user interactions."
+                    },
+                    {
+                        title: "DLP Capabilities",
+                        list: [
+                            "Content inspection with ML",
+                            "PII/PHI detection",
+                            "Credit card masking",
+                            "Custom pattern matching",
+                            "Contextual analysis"
+                        ]
+                    },
+                    {
+                        title: "Prevention Actions",
+                        list: [
+                            "Block sensitive transfers",
+                            "Redact/mask content",
+                            "Quarantine for review",
+                            "Alert security teams",
+                            "User coaching messages"
+                        ]
+                    }
+                ]
+            },
+            siem: {
+                title: "SIEM Platform",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Security Information and Event Management system collecting, analyzing, and correlating security events across the infrastructure."
+                    },
+                    {
+                        title: "SIEM Features",
+                        list: [
+                            "Real-time event correlation",
+                            "Threat intelligence feeds",
+                            "Behavioral analytics (UEBA)",
+                            "Automated incident response",
+                            "Compliance reporting"
+                        ]
+                    },
+                    {
+                        title: "Data Sources",
+                        list: [
+                            "Application logs",
+                            "Network flow data",
+                            "Endpoint telemetry",
+                            "Cloud audit trails",
+                            "Threat intel feeds"
+                        ]
+                    }
+                ]
+            },
+            ids: {
+                title: "Intrusion Detection System",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Network and host-based intrusion detection identifying malicious activities and security policy violations."
+                    },
+                    {
+                        title: "Detection Methods",
+                        list: [
+                            "Signature-based detection",
+                            "Anomaly detection with ML",
+                            "Behavioral analysis",
+                            "Protocol analysis",
+                            "Heuristic detection"
+                        ]
+                    },
+                    {
+                        title: "IDS/IPS Deployment",
+                        list: [
+                            "Network IDS (Snort/Suricata)",
+                            "Host IDS (OSSEC)",
+                            "Cloud-native (GuardDuty)",
+                            "Container IDS (Falco)",
+                            "API-level detection"
+                        ]
+                    }
+                ]
+            },
+            "threat-intel": {
+                title: "Threat Intelligence",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Aggregates and analyzes threat data from multiple sources to proactively identify and mitigate security risks."
+                    },
+                    {
+                        title: "Intelligence Sources",
+                        list: [
+                            "Commercial threat feeds",
+                            "Open source (OSINT)",
+                            "Industry sharing (ISACs)",
+                            "Dark web monitoring",
+                            "Internal telemetry"
+                        ]
+                    },
+                    {
+                        title: "Threat Analysis",
+                        list: [
+                            "IOC matching and blocking",
+                            "TTP analysis (MITRE ATT&CK)",
+                            "Attribution analysis",
+                            "Risk scoring models",
+                            "Predictive analytics"
+                        ]
+                    }
+                ]
+            },
+            forensics: {
+                title: "Digital Forensics Tools",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Comprehensive forensic toolkit for incident investigation, evidence collection, and root cause analysis."
+                    },
+                    {
+                        title: "Forensic Capabilities",
+                        list: [
+                            "Memory dump analysis",
+                            "Disk image forensics",
+                            "Network packet capture",
+                            "Log timeline analysis",
+                            "Malware reverse engineering"
+                        ]
+                    },
+                    {
+                        title: "Investigation Tools",
+                        list: [
+                            "Volatility for memory",
+                            "Autopsy for disk analysis",
+                            "Wireshark for packets",
+                            "ELK for log analysis",
+                            "Chain of custody tracking"
+                        ]
+                    }
+                ]
+            },
+            audit: {
+                title: "Audit Logging System",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Immutable audit trail capturing all system activities for compliance, security monitoring, and forensic analysis."
+                    },
+                    {
+                        title: "Audit Coverage",
+                        list: [
+                            "API access logs",
+                            "Data access records",
+                            "Configuration changes",
+                            "Privilege escalations",
+                            "Model inference logs"
+                        ]
+                    },
+                    {
+                        title: "Compliance Features",
+                        list: [
+                            "Tamper-proof storage",
+                            "Legal hold capabilities",
+                            "Automated reports",
+                            "Long-term retention",
+                            "Export for e-discovery"
+                        ]
+                    }
+                ]
+            },
+            privacy: {
+                title: "Privacy Controls",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Privacy-by-design implementation ensuring GDPR, CCPA, and other privacy regulation compliance."
+                    },
+                    {
+                        title: "Privacy Features",
+                        list: [
+                            "Consent management",
+                            "Right to deletion (RTBF)",
+                            "Data portability APIs",
+                            "Purpose limitation",
+                            "Data minimization"
+                        ]
+                    },
+                    {
+                        title: "Technical Controls",
+                        list: [
+                            "Differential privacy",
+                            "Data anonymization",
+                            "Synthetic data generation",
+                            "Privacy-preserving ML",
+                            "Federated learning"
+                        ]
+                    }
+                ]
+            },
+            governance: {
+                title: "IT Governance Platform",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Enterprise governance framework managing policies, risk, compliance, and security posture across the organization."
+                    },
+                    {
+                        title: "Governance Components",
+                        list: [
+                            "Policy lifecycle management",
+                            "Risk assessment matrices",
+                            "Control frameworks (NIST/ISO)",
+                            "Vendor management",
+                            "Business continuity plans"
+                        ]
+                    },
+                    {
+                        title: "GRC Integration",
+                        list: [
+                            "Automated compliance checks",
+                            "Risk heat maps",
+                            "Control effectiveness",
+                            "Audit management",
+                            "Executive dashboards"
+                        ]
+                    }
+                ]
+            },
+            vulnerability: {
+                title: "Vulnerability Management",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Continuous vulnerability assessment and remediation across infrastructure, applications, and dependencies."
+                    },
+                    {
+                        title: "Scanning Capabilities",
+                        list: [
+                            "Network vulnerability scans",
+                            "Web application testing",
+                            "Container image scanning",
+                            "Dependency checking",
+                            "Infrastructure as Code"
+                        ]
+                    },
+                    {
+                        title: "Remediation Process",
+                        list: [
+                            "Automated patching",
+                            "Risk-based prioritization",
+                            "Virtual patching (WAF)",
+                            "Compensating controls",
+                            "Vulnerability metrics"
+                        ]
+                    }
+                ]
+            },
+            "ml-security": {
+                title: "ML Security Suite",
+                sections: [
+                    {
+                        title: "Overview",
+                        content: "Specialized security measures for protecting machine learning models and preventing adversarial attacks."
+                    },
+                    {
+                        title: "Threat Protection",
+                        list: [
+                            "Adversarial input detection",
+                            "Model extraction prevention",
+                            "Prompt injection filtering",
+                            "Data poisoning detection",
+                            "Model inversion defense"
+                        ]
+                    },
+                    {
+                        title: "Implementation",
+                        code: `class MLSecurityPipeline:
+    def __init__(self):
+        self.adversarial_detector = RobustIntelligence()
+        self.prompt_filter = NeMoGuardrails()
+        self.privacy_shield = DifferentialPrivacy()
+    
+    def validate_input(self, prompt):
+        # Check for prompt injections
+        if self.prompt_filter.is_malicious(prompt):
+            raise SecurityException("Prompt injection detected")
+        
+        # Detect adversarial patterns
+        if self.adversarial_detector.check(prompt):
+            raise SecurityException("Adversarial input detected")
+        
+        return self.privacy_shield.sanitize(prompt)`
+                    }
+                ]
+            }
+        };
+
+        // Stack-specific connections
+        const connections = {
+            ml: [
+                { from: 'input', to: 'embedding' },
+                { from: 'input', to: 'vectordb' },
+                { from: 'embedding', to: 'retrieval' },
+                { from: 'vectordb', to: 'retrieval' },
+                { from: 'retrieval', to: 'cache' },
+                { from: 'cache', to: 'augmentation' },
+                { from: 'retrieval', to: 'rerank' },
+                { from: 'rerank', to: 'augmentation' },
+                { from: 'augmentation', to: 'llm' },
+                { from: 'llm', to: 'output' },
+                { from: 'mlmonitoring', to: 'embedding', type: 'security' },
+                { from: 'mlmonitoring', to: 'llm', type: 'security' }
+            ],
+            software: [
+                { from: 'api-gateway', to: 'orchestration' },
+                { from: 'web-app', to: 'api-gateway' },
+                { from: 'mobile', to: 'api-gateway' },
+                { from: 'webhooks', to: 'message-queue' },
+                { from: 'orchestration', to: 'compute' },
+                { from: 'service-mesh', to: 'orchestration' },
+                { from: 'message-queue', to: 'workflow' },
+                { from: 'workflow', to: 'serverless' },
+                { from: 'compute', to: 'databases' },
+                { from: 'storage', to: 'data-lake' },
+                { from: 'data-lake', to: 'streaming' }
+            ],
+            hardware: [
+                { from: 'edge-devices', to: 'edge-servers' },
+                { from: 'edge-servers', to: '5g-mec' },
+                { from: '5g-mec', to: 'gpu-clusters' },
+                { from: 'gpu-clusters', to: 'tpu-pods' },
+                { from: 'cpu-nodes', to: 'fpga' },
+                { from: 'gpu-clusters', to: 'nvme-storage' },
+                { from: 'nvme-storage', to: 'object-storage' },
+                { from: 'object-storage', to: 'tape-archive' },
+                { from: 'infiniband', to: 'gpu-clusters' },
+                { from: 'backbone', to: 'load-balancers' }
+            ],
+            security: [
+                { from: 'iam', to: 'mfa' },
+                { from: 'mfa', to: 'sso' },
+                { from: 'sso', to: 'pam' },
+                { from: 'waf', to: 'encryption' },
+                { from: 'encryption', to: 'secrets' },
+                { from: 'secrets', to: 'dlp' },
+                { from: 'siem', to: 'ids' },
+                { from: 'ids', to: 'threat-intel' },
+                { from: 'threat-intel', to: 'forensics' },
+                { from: 'audit', to: 'privacy' },
+                { from: 'privacy', to: 'governance' },
+                { from: 'governance', to: 'vulnerability' },
+                { from: 'ml-security', to: 'waf', type: 'security' },
+                { from: 'ml-security', to: 'siem', type: 'security' }
+            ]
+        };
+
+        // Pipeline-specific connections
+        const pipelineConnections = {
+            chatbot: [
+                { from: 'user-query', to: 'intent-classification' },
+                { from: 'intent-classification', to: 'kb-search' },
+                { from: 'intent-classification', to: 'ticket-history' },
+                { from: 'kb-search', to: 'context-builder' },
+                { from: 'ticket-history', to: 'context-builder' },
+                { from: 'context-builder', to: 'response-gen' },
+                { from: 'response-gen', to: 'quality-check' },
+                { from: 'quality-check', to: 'feedback-loop', type: 'security' },
+                { from: 'feedback-loop', to: 'kb-search', type: 'security' }
+            ],
+            research: [
+                { from: 'research-query', to: 'query-decompose' },
+                { from: 'query-decompose', to: 'academic-search' },
+                { from: 'query-decompose', to: 'web-search' },
+                { from: 'query-decompose', to: 'data-sources' },
+                { from: 'academic-search', to: 'synthesis' },
+                { from: 'web-search', to: 'synthesis' },
+                { from: 'data-sources', to: 'synthesis' },
+                { from: 'synthesis', to: 'report-gen' },
+                { from: 'report-gen', to: 'citations' },
+                { from: 'synthesis', to: 'fact-check', type: 'security' },
+                { from: 'fact-check', to: 'report-gen', type: 'security' }
+            ],
+            code: [
+                { from: 'code-request', to: 'lang-detect' },
+                { from: 'lang-detect', to: 'code-search' },
+                { from: 'lang-detect', to: 'doc-search' },
+                { from: 'code-search', to: 'pattern-match' },
+                { from: 'doc-search', to: 'pattern-match' },
+                { from: 'pattern-match', to: 'code-gen' },
+                { from: 'code-gen', to: 'security-scan' },
+                { from: 'code-gen', to: 'code-review' },
+                { from: 'security-scan', to: 'test-gen', type: 'security' },
+                { from: 'code-review', to: 'test-gen', type: 'security' }
+            ],
+            analytics: [
+                { from: 'doc-upload', to: 'ocr-process' },
+                { from: 'ocr-process', to: 'doc-chunk' },
+                { from: 'ocr-process', to: 'entity-extract' },
+                { from: 'doc-chunk', to: 'classify' },
+                { from: 'entity-extract', to: 'classify' },
+                { from: 'classify', to: 'insights' },
+                { from: 'insights', to: 'viz' },
+                { from: 'viz', to: 'export' },
+                { from: 'insights', to: 'export', type: 'security' }
+            ]
+        };
+
+        function drawPipelineConnections(pipeline) {
+            const pipelineEl = document.getElementById(`${pipeline}-pipeline`);
+            const connections = pipelineConnections[pipeline] || [];
+            
+            connections.forEach(conn => {
+                const fromEl = pipelineEl.querySelector(`[data-id="${conn.from}"]`);
+                const toEl = pipelineEl.querySelector(`[data-id="${conn.to}"]`);
+                
+                if (fromEl && toEl) {
+                    const fromRect = fromEl.getBoundingClientRect();
+                    const toRect = toEl.getBoundingClientRect();
+                    const containerRect = pipelineEl.getBoundingClientRect();
+                    
+                    const fromX = fromRect.right - containerRect.left;
+                    const fromY = fromRect.top + fromRect.height / 2 - containerRect.top;
+                    const toX = toRect.left - containerRect.left;
+                    const toY = toRect.top + toRect.height / 2 - containerRect.top;
+                    
+                    const distance = Math.sqrt((toX - fromX) ** 2 + (toY - fromY) ** 2);
+                    const angle = Math.atan2(toY - fromY, toX - fromX) * 180 / Math.PI;
+                    
+                    const connection = document.createElement('div');
+                    connection.className = conn.type === 'security' ? 'connection security-connection' : 'connection';
+                    connection.style.left = fromX + 'px';
+                    connection.style.top = fromY + 'px';
+                    connection.style.width = distance + 'px';
+                    connection.style.transform = `rotate(${angle}deg)`;
+                    
+                    pipelineEl.appendChild(connection);
+                }
+            });
+        }
+
+        function showStack(stack) {
+            currentStack = stack;
+            currentPipeline = null;
+            
+            // Update button states
+            document.querySelectorAll('.stack-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.pipeline-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Hide all views
+            document.querySelectorAll('.architecture').forEach(arch => {
+                arch.classList.add('hidden');
+            });
+            
+            // Show selected stack
+            document.getElementById(`${stack}-stack`).classList.remove('hidden');
+            
+            // Redraw connections
+            setTimeout(() => {
+                document.querySelectorAll('.connection').forEach(conn => conn.remove());
+                drawConnections(stack);
+            }, 50);
+        }
+
+        function showPipeline(pipeline) {
+            currentPipeline = pipeline;
+            currentStack = null;
+            
+            // Update button states
+            document.querySelectorAll('.stack-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.pipeline-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Hide all views
+            document.querySelectorAll('.architecture').forEach(arch => {
+                arch.classList.add('hidden');
+            });
+            
+            // Show selected pipeline
+            document.getElementById(`${pipeline}-pipeline`).classList.remove('hidden');
+            
+            // Redraw connections
+            setTimeout(() => {
+                document.querySelectorAll('.connection').forEach(conn => conn.remove());
+                drawPipelineConnections(pipeline);
+            }, 50);
+        }
+
+        function drawConnections(stack = currentStack) {
+            if (!stack) return;
+            
+            const architecture = document.getElementById(`${stack}-stack`);
+            const stackConnections = connections[stack] || [];
+            
+            stackConnections.forEach(conn => {
+                const fromEl = architecture.querySelector(`[data-id="${conn.from}"]`);
+                const toEl = architecture.querySelector(`[data-id="${conn.to}"]`);
+                
+                if (fromEl && toEl) {
+                    const fromRect = fromEl.getBoundingClientRect();
+                    const toRect = toEl.getBoundingClientRect();
+                    const containerRect = architecture.getBoundingClientRect();
+                    
+                    const fromX = fromRect.right - containerRect.left;
+                    const fromY = fromRect.top + fromRect.height / 2 - containerRect.top;
+                    const toX = toRect.left - containerRect.left;
+                    const toY = toRect.top + toRect.height / 2 - containerRect.top;
+                    
+                    const distance = Math.sqrt((toX - fromX) ** 2 + (toY - fromY) ** 2);
+                    const angle = Math.atan2(toY - fromY, toX - fromX) * 180 / Math.PI;
+                    
+                    const connection = document.createElement('div');
+                    connection.className = conn.type === 'security' ? 'connection security-connection' : 'connection';
+                    connection.style.left = fromX + 'px';
+                    connection.style.top = fromY + 'px';
+                    connection.style.width = distance + 'px';
+                    connection.style.transform = `rotate(${angle}deg)`;
+                    
+                    architecture.appendChild(connection);
+                }
+            });
+        }
+
+        function showComponentInfo(id) {
+            const info = componentInfo[id];
+            if (!info) return;
+            
+            const panel = document.getElementById('infoPanel');
+            const content = document.getElementById('infoPanelContent');
+            
+            let html = `<h2>${info.title}</h2>`;
+            
+            info.sections.forEach(section => {
+                html += `<div class="info-section">`;
+                html += `<h3>${section.title}</h3>`;
+                
+                if (section.content) {
+                    html += `<p>${section.content}</p>`;
+                }
+                
+                if (section.list) {
+                    html += '<ul>';
+                    section.list.forEach(item => {
+                        html += `<li>${item}</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                if (section.code) {
+                    html += `<div class="code-block">${section.code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
+                }
+                
+                html += '</div>';
+            });
+            
+            content.innerHTML = html;
+            panel.classList.add('active');
+        }
+
+        function closeInfoPanel() {
+            document.getElementById('infoPanel').classList.remove('active');
+            document.querySelectorAll('.component').forEach(c => c.classList.remove('active'));
+        }
+
+        // Redraw connections on resize
+        window.addEventListener('resize', () => {
+            document.querySelectorAll('.connection').forEach(conn => conn.remove());
+            if (currentStack) {
+                drawConnections();
+            } else if (currentPipeline) {
+                drawPipelineConnections(currentPipeline);
+            }
+        });
+    </script>
+</body>
+</html>
